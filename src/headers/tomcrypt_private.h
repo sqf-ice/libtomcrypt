@@ -23,7 +23,9 @@ enum public_key_algorithms {
    PKA_RSA,
    PKA_DSA,
    PKA_EC,
-   PKA_EC_PRIMEF
+   PKA_EC_PRIMEF,
+   PKA_X25519,
+   PKA_ED25519,
 };
 
 /*

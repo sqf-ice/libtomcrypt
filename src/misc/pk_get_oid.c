@@ -29,6 +29,16 @@ static const oid_st ec_primef = {
    6,
 };
 
+static const oid_st x25519_oid = {
+   { 1, 3, 101, 110 },
+   4,
+};
+
+static const oid_st ed25519_oid = {
+   { 1, 3, 101, 112 },
+   4,
+};
+
 /*
    Returns the OID of the public key algorithm.
    @return CRYPT_OK if valid
@@ -47,6 +57,12 @@ int pk_get_oid(int pk, oid_st *st)
          break;
       case PKA_EC_PRIMEF:
          XMEMCPY(st, &ec_primef, sizeof(*st));
+         break;
+      case PKA_X25519:
+         XMEMCPY(st, &x25519_oid, sizeof(*st));
+         break;
+      case PKA_ED25519:
+         XMEMCPY(st, &ed25519_oid, sizeof(*st));
          break;
       default:
          return CRYPT_INVALID_ARG;
