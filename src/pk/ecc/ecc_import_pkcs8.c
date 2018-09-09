@@ -13,57 +13,14 @@
 
 #define LTC_ASN1_IS_TYPE(e, t) (((e) != NULL) && ((e)->type == (t)))
 
-enum algorithm_oid {
-   PBE_MD2_DES,         /* 0 */
-   PBE_MD2_RC2,
-   PBE_MD5_DES,
-   PBE_MD5_RC2,
-   PBE_SHA1_DES,
-   PBE_SHA1_RC2,        /* 5 */
-   PBES2,
-   PBKDF2,
-   DES_CBC,
-   RC2_CBC,
-   DES_EDE3_CBC,        /* 10 */
-   HMAC_WITH_SHA1,
-   HMAC_WITH_SHA224,
-   HMAC_WITH_SHA256,
-   HMAC_WITH_SHA384,
-   HMAC_WITH_SHA512,    /* 15 */
-   PBE_SHA1_3DES
-};
-
-static const oid_st oid_list[] = {
-   { { 1,2,840,113549,1,5,1     }, 7 }, /* [0]  http://www.oid-info.com/get/1.2.840.113549.1.5.1    pbeWithMD2AndDES-CBC */
-   { { 1,2,840,113549,1,5,4     }, 7 }, /* [1]  http://www.oid-info.com/get/1.2.840.113549.1.5.4    pbeWithMD2AndRC2-CBC */
-   { { 1,2,840,113549,1,5,3     }, 7 }, /* [2]  http://www.oid-info.com/get/1.2.840.113549.1.5.3    pbeWithMD5AndDES-CBC */
-   { { 1,2,840,113549,1,5,6     }, 7 }, /* [3]  http://www.oid-info.com/get/1.2.840.113549.1.5.6    pbeWithMD5AndRC2-CBC */
-   { { 1,2,840,113549,1,5,10    }, 7 }, /* [4]  http://www.oid-info.com/get/1.2.840.113549.1.5.10   pbeWithSHA1AndDES-CBC */
-   { { 1,2,840,113549,1,5,11    }, 7 }, /* [5]  http://www.oid-info.com/get/1.2.840.113549.1.5.11   pbeWithSHA1AndRC2-CBC */
-   { { 1,2,840,113549,1,5,13    }, 7 }, /* [6]  http://www.oid-info.com/get/1.2.840.113549.1.5.13   pbes2 */
-   { { 1,2,840,113549,1,5,12    }, 7 }, /* [7]  http://www.oid-info.com/get/1.2.840.113549.1.5.12   pBKDF2 */
-   { { 1,3,14,3,2,7             }, 6 }, /* [8]  http://www.oid-info.com/get/1.3.14.3.2.7            desCBC */
-   { { 1,2,840,113549,3,2       }, 6 }, /* [9]  http://www.oid-info.com/get/1.2.840.113549.3.2      rc2CBC */
-   { { 1,2,840,113549,3,7       }, 6 }, /* [10] http://www.oid-info.com/get/1.2.840.113549.3.7      des-EDE3-CBC */
-   { { 1,2,840,113549,2,7       }, 6 }, /* [11] http://www.oid-info.com/get/1.2.840.113549.2.7      hmacWithSHA1 */
-   { { 1,2,840,113549,2,8       }, 6 }, /* [12] http://www.oid-info.com/get/1.2.840.113549.2.8      hmacWithSHA224 */
-   { { 1,2,840,113549,2,9       }, 6 }, /* [13] http://www.oid-info.com/get/1.2.840.113549.2.9      hmacWithSHA256 */
-   { { 1,2,840,113549,2,10      }, 6 }, /* [14] http://www.oid-info.com/get/1.2.840.113549.2.10     hmacWithSHA384 */
-   { { 1,2,840,113549,2,11      }, 6 }, /* [15] http://www.oid-info.com/get/1.2.840.113549.2.11     hmacWithSHA512 */
-   { { 1,2,840,113549,1,12,1,3  }, 8 }, /* [16] http://www.oid-info.com/get/1.2.840.113549.1.12.1.3 pbeWithSHAAnd3-KeyTripleDES-CBC */
-   { { 0 }, 0 },
-};
-
 static int _oid_to_id(const unsigned long *oid, unsigned long oid_size)
 {
-   int i, j;
-   for (j = 0; oid_list[j].OIDlen > 0; j++) {
-     int match = 1;
-     if (oid_list[j].OIDlen != oid_size) continue;
-     for (i = 0; i < (int)oid_size && match; i++) if (oid_list[j].OID[i] != oid[i]) match = 0;
-     if (match) return j;
-   }
-   return -1;
+   char OID[50];
+   unsigned long outlen = sizeof(OID);
+   enum ltc_oid_id id = -1;
+   if (pk_oid_num_to_str(oid, oid_size, OID, &outlen) != CRYPT_OK) return -1;
+   if (pk_get_oid_id(OID, &id) != CRYPT_OK) return -1;
+   return id;
 }
 
 static int _pbes1_decrypt(const unsigned char *enc_data, unsigned long enc_size,
@@ -82,27 +39,27 @@ static int _pbes1_decrypt(const unsigned char *enc_data, unsigned long enc_size,
    unsigned char *pw = NULL;
 
    /* https://tools.ietf.org/html/rfc8018#section-6.1.2 */
-   if (id == PBE_MD2_DES  || id == PBE_MD2_RC2) hid = find_hash("md2");
-   if (id == PBE_MD5_DES  || id == PBE_MD5_RC2) hid = find_hash("md5");
-   if (id == PBE_SHA1_DES || id == PBE_SHA1_RC2 || id == PBE_SHA1_3DES) hid = find_hash("sha1");
+   if (id == PKA_PBE_MD2_DES  || id == PKA_PBE_MD2_RC2) hid = find_hash("md2");
+   if (id == PKA_PBE_MD5_DES  || id == PKA_PBE_MD5_RC2) hid = find_hash("md5");
+   if (id == PKA_PBE_SHA1_DES || id == PKA_PBE_SHA1_RC2 || id == PKA_PBE_SHA1_3DES) hid = find_hash("sha1");
 
-   if (id == PBE_MD2_RC2 || id == PBE_MD5_RC2 || id == PBE_SHA1_RC2) {
+   if (id == PKA_PBE_MD2_RC2 || id == PKA_PBE_MD5_RC2 || id == PKA_PBE_SHA1_RC2) {
       cid = find_cipher("rc2");
       keylen = 8;
       blklen = 8;
    }
-   if (id == PBE_MD2_DES || id == PBE_MD5_DES || id == PBE_SHA1_DES) {
+   if (id == PKA_PBE_MD2_DES || id == PKA_PBE_MD5_DES || id == PKA_PBE_SHA1_DES) {
       cid = find_cipher("des");
       keylen = 8;
       blklen = 8;
    }
-   if (id == PBE_SHA1_3DES) {
+   if (id == PKA_PBE_SHA1_3DES) {
       cid = find_cipher("3des");
       keylen = 24;
       blklen = 8;
    }
 
-   if (id == PBE_SHA1_3DES) {
+   if (id == PKA_PBE_SHA1_3DES) {
       /* convert password to unicode/utf16-be */
       pwlen = pass_size * 2;
       pw = XMALLOC(pwlen + 2);
@@ -157,14 +114,14 @@ static int _pbes2_pbkdf2_decrypt(const unsigned char *enc_data, unsigned long en
 
    /* https://tools.ietf.org/html/rfc8018#section-6.2.2 */
 
-   if (hmacid == HMAC_WITH_SHA1)   hid = find_hash("sha1");
-   if (hmacid == HMAC_WITH_SHA224) hid = find_hash("sha224");
-   if (hmacid == HMAC_WITH_SHA256) hid = find_hash("sha256");
-   if (hmacid == HMAC_WITH_SHA384) hid = find_hash("sha384");
-   if (hmacid == HMAC_WITH_SHA512) hid = find_hash("sha512");
+   if (hmacid == PKA_HMAC_WITH_SHA1)   hid = find_hash("sha1");
+   if (hmacid == PKA_HMAC_WITH_SHA224) hid = find_hash("sha224");
+   if (hmacid == PKA_HMAC_WITH_SHA256) hid = find_hash("sha256");
+   if (hmacid == PKA_HMAC_WITH_SHA384) hid = find_hash("sha384");
+   if (hmacid == PKA_HMAC_WITH_SHA512) hid = find_hash("sha512");
    if (hid == -1) return CRYPT_INVALID_ARG;
 
-   if (encid == DES_EDE3_CBC) {
+   if (encid == PKA_DES_EDE3_CBC) {
       /* https://tools.ietf.org/html/rfc8018#appendix-B.2.2 */
       cid = find_cipher("3des");
       klen = 24;
@@ -179,7 +136,7 @@ static int _pbes2_pbkdf2_decrypt(const unsigned char *enc_data, unsigned long en
       return CRYPT_OK;
    }
 
-   if (encid == DES_CBC) {
+   if (encid == PKA_DES_CBC) {
       /* https://tools.ietf.org/html/rfc8018#appendix-B.2.1 */
       cid = find_cipher("des");
       klen = 8; /* 64 bits */
@@ -194,7 +151,7 @@ static int _pbes2_pbkdf2_decrypt(const unsigned char *enc_data, unsigned long en
       return CRYPT_OK;
    }
 
-   if (encid == RC2_CBC) {
+   if (encid == PKA_RC2_CBC) {
      /* https://tools.ietf.org/html/rfc8018#appendix-B.2.3 */
       cid = find_cipher("rc2");
       klen = 4; /* default: 32 bits */
@@ -262,7 +219,7 @@ static int _der_decode_pkcs8_flexi(const unsigned char *in,  unsigned long inlen
             err = _pbes1_decrypt(enc_data, enc_size, pwd, pwdlen, salt, salt_size, iter, lalgoid->data, lalgoid->size, dec_data, &dec_size);
             if (err != CRYPT_OK) goto LBL_DONE;
          }
-         else if (PBES2 == _oid_to_id(lalgoid->data, lalgoid->size) &&
+         else if (PKA_PBES2 == _oid_to_id(lalgoid->data, lalgoid->size) &&
                   LTC_ASN1_IS_TYPE(lalgparam->child, LTC_ASN1_SEQUENCE) &&
                   LTC_ASN1_IS_TYPE(lalgparam->child->child, LTC_ASN1_OBJECT_IDENTIFIER) &&
                   LTC_ASN1_IS_TYPE(lalgparam->child->child->next, LTC_ASN1_SEQUENCE) &&
@@ -290,7 +247,7 @@ static int _der_decode_pkcs8_flexi(const unsigned char *in,  unsigned long inlen
             ltc_asn1_list *lenc = lalgparam->child->next->child;
             int kdfid = _oid_to_id(lkdf->data, lkdf->size);
             int encid = _oid_to_id(lenc->data, lenc->size);
-            if (PBKDF2 == kdfid &&
+            if (PKA_PBKDF2 == kdfid &&
                 LTC_ASN1_IS_TYPE(lkdf->next, LTC_ASN1_SEQUENCE) &&
                 LTC_ASN1_IS_TYPE(lkdf->next->child, LTC_ASN1_OCTET_STRING) &&
                 LTC_ASN1_IS_TYPE(lkdf->next->child->next, LTC_ASN1_INTEGER)) {
@@ -301,7 +258,7 @@ static int _der_decode_pkcs8_flexi(const unsigned char *in,  unsigned long inlen
                unsigned long iv_size = 0;
                unsigned long arg = 0;
                ltc_asn1_list *loptseq = lkdf->next->child->next->next;
-               int hmacid = HMAC_WITH_SHA1; /* this is default */
+               int hmacid = PKA_HMAC_WITH_SHA1; /* this is default */
                if (LTC_ASN1_IS_TYPE(loptseq, LTC_ASN1_SEQUENCE) &&
                    LTC_ASN1_IS_TYPE(loptseq->child, LTC_ASN1_OBJECT_IDENTIFIER)) {
                   /* this sequence is optional */
@@ -360,7 +317,7 @@ int ecc_import_pkcs8(const unsigned char *in, unsigned long inlen,
 {
    void          *a, *b, *gx, *gy;
    unsigned long len, cofactor;
-   oid_st        ecoid;
+   const char    *ecoid;
    int           err;
    char          OID[256];
    const ltc_ecc_curve *curve;
@@ -388,8 +345,7 @@ int ecc_import_pkcs8(const unsigned char *in, unsigned long inlen,
          ltc_asn1_list *lpri = l->child->next->next;
          ltc_asn1_list *lecoid = l->child->next->child;
 
-         if ((lecoid->size != ecoid.OIDlen) ||
-             (XMEMCMP(ecoid.OID, lecoid->data, ecoid.OIDlen * sizeof(ecoid.OID[0])) != 0)) {
+         if (pk_oid_cmp_with_asn1(ecoid, lecoid) != CRYPT_OK) {
             err = CRYPT_PK_INVALID_TYPE;
             goto LBL_DONE;
          }

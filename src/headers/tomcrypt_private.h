@@ -23,7 +23,27 @@ enum ltc_oid_id {
    PKA_RSA,
    PKA_DSA,
    PKA_EC,
-   PKA_EC_PRIMEF
+   PKA_EC_PRIMEF,
+   PKA_PBE_MD2_DES,
+   PKA_PBE_MD2_RC2,
+   PKA_PBE_MD5_DES,
+   PKA_PBE_MD5_RC2,
+   PKA_PBE_SHA1_DES,
+   PKA_PBE_SHA1_RC2,
+   PKA_PBES2,
+   PKA_PBKDF2,
+   PKA_DES_CBC,
+   PKA_RC2_CBC,
+   PKA_DES_EDE3_CBC,
+   PKA_HMAC_WITH_SHA1,
+   PKA_HMAC_WITH_SHA224,
+   PKA_HMAC_WITH_SHA256,
+   PKA_HMAC_WITH_SHA384,
+   PKA_HMAC_WITH_SHA512,
+   PKA_PBE_SHA1_3DES,
+   PKA_AES128_CBC,
+   PKA_AES192_CBC,
+   PKA_AES256_CBC
 };
 
 /*
@@ -174,6 +194,7 @@ int rand_bn_bits(void *N, int bits, prng_state *prng, int wprng);
 int rand_bn_upto(void *N, void *limit, prng_state *prng, int wprng);
 
 int pk_get_oid(enum ltc_oid_id id, const char **st);
+int pk_get_oid_id(const char *st, enum ltc_oid_id *id);
 int pk_oid_str_to_num(const char *OID, unsigned long *oid, unsigned long *oidlen);
 int pk_oid_num_to_str(const unsigned long *oid, unsigned long oidlen, char *OID, unsigned long *outlen);
 
